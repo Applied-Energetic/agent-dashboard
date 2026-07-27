@@ -1,0 +1,591 @@
+.agent-dashboard-view {
+	--agent-dashboard-panel: var(--background-primary);
+	--agent-dashboard-panel-muted: var(--background-secondary);
+	--agent-dashboard-border: var(--background-modifier-border);
+	--agent-dashboard-border-hover: var(--background-modifier-border-hover);
+	--agent-dashboard-ink: var(--text-normal);
+	--agent-dashboard-muted: var(--text-muted);
+	--agent-dashboard-faint: var(--text-faint);
+	--agent-dashboard-accent: var(--interactive-accent);
+	--agent-dashboard-accent-hover: var(--interactive-accent-hover);
+	--agent-dashboard-success: var(--text-success);
+	--agent-dashboard-warning: var(--text-warning);
+	--agent-dashboard-green: var(--color-green);
+	--agent-dashboard-yellow: var(--color-yellow);
+	--agent-dashboard-mono: var(--font-monospace-theme);
+
+	height: 100%;
+	padding: 0;
+	overflow: auto;
+	background: var(--background-primary);
+}
+
+.agent-dashboard-view .agent-dashboard {
+	box-sizing: border-box;
+	min-height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-3);
+	padding: var(--size-4-6);
+	color: var(--agent-dashboard-ink);
+	background: var(--agent-dashboard-panel);
+	font-family: var(--font-interface-theme);
+}
+
+.agent-dashboard-view .agent-dashboard__status {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.agent-dashboard-view .agent-dashboard__header {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--size-4-6);
+	padding-bottom: var(--size-4-4);
+	border-bottom: var(--border-width) solid var(--agent-dashboard-border);
+}
+
+.agent-dashboard-view .agent-dashboard__eyebrow,
+.agent-dashboard-view .agent-dashboard__section-kicker {
+	margin: 0;
+	color: var(--agent-dashboard-muted);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-smaller);
+	font-weight: var(--font-bold);
+	letter-spacing: 0.12em;
+	line-height: var(--line-height-tight);
+	text-transform: uppercase;
+}
+
+.agent-dashboard-view .agent-dashboard__title {
+	margin: var(--size-4-1) 0 0;
+	color: var(--agent-dashboard-ink);
+	font-family: var(--font-text-theme);
+	font-size: clamp(1.75rem, 3vw, 3.25rem);
+	font-weight: var(--font-bold);
+	letter-spacing: -0.06em;
+	line-height: 0.95;
+	text-transform: uppercase;
+}
+
+.agent-dashboard-view .agent-dashboard__controls {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--size-4-2);
+	flex-wrap: wrap;
+}
+
+.agent-dashboard-view .agent-dashboard__live,
+.agent-dashboard-view .agent-dashboard__sync,
+.agent-dashboard-view .agent-dashboard__refresh {
+	min-height: 36px;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	border: var(--border-width) solid var(--agent-dashboard-border);
+	border-radius: var(--radius-s);
+	padding: 0 var(--size-4-2);
+	background: var(--agent-dashboard-panel-muted);
+	color: var(--agent-dashboard-muted);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-smaller);
+	font-weight: var(--font-bold);
+	letter-spacing: 0.06em;
+}
+
+.agent-dashboard-view .agent-dashboard__live {
+	color: var(--agent-dashboard-success);
+}
+
+.agent-dashboard-view .agent-dashboard__live-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--agent-dashboard-green);
+	box-shadow: 0 0 0 3px var(--background-modifier-hover);
+}
+
+.agent-dashboard-view .agent-dashboard__refresh {
+	border-color: var(--agent-dashboard-ink);
+	color: var(--agent-dashboard-ink);
+	cursor: pointer;
+	transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.agent-dashboard-view .agent-dashboard__refresh:hover {
+	border-color: var(--agent-dashboard-accent);
+	background: var(--agent-dashboard-accent);
+	color: var(--text-on-accent);
+}
+
+.agent-dashboard-view .agent-dashboard__refresh-icon {
+	width: 16px;
+	height: 16px;
+	display: inline-grid;
+	place-items: center;
+}
+
+.agent-dashboard-view .agent-dashboard__refresh.is-refreshing .svg-icon {
+	transform: rotate(180deg);
+}
+
+.agent-dashboard-view .agent-dashboard__section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+}
+
+.agent-dashboard-view .agent-dashboard__section-kicker {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--size-4-3);
+	font-size: var(--font-smallest);
+}
+
+.agent-dashboard-view .agent-dashboard__action-rail {
+	display: grid;
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	gap: var(--size-4-2);
+}
+
+.agent-dashboard-view .agent-dashboard__action-button {
+	min-height: 56px;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	gap: 0 var(--size-4-2);
+	border: var(--border-width) solid var(--agent-dashboard-border);
+	border-radius: var(--radius-s);
+	padding: var(--size-4-2);
+	background: var(--agent-dashboard-panel-muted);
+	color: var(--agent-dashboard-ink);
+	text-align: left;
+	cursor: pointer;
+	transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.agent-dashboard-view .agent-dashboard__action-button:hover {
+	transform: translateY(-1px);
+	border-color: var(--agent-dashboard-border-hover);
+	background: var(--background-modifier-hover);
+}
+
+.agent-dashboard-view .agent-dashboard__action-button.is-queued {
+	border-color: var(--agent-dashboard-accent);
+	background: var(--agent-dashboard-accent);
+	color: var(--text-on-accent);
+}
+
+.agent-dashboard-view .agent-dashboard__action-icon {
+	width: 18px;
+	height: 18px;
+	display: inline-grid;
+	place-items: center;
+	grid-row: span 2;
+}
+
+.agent-dashboard-view .agent-dashboard__action-label {
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-bold);
+	letter-spacing: -0.02em;
+}
+
+.agent-dashboard-view .agent-dashboard__action-state {
+	margin-top: 2px;
+	color: var(--agent-dashboard-muted);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-smallest);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.agent-dashboard-view .agent-dashboard__action-button.is-queued .agent-dashboard__action-state {
+	color: var(--text-on-accent);
+}
+
+.agent-dashboard-view .agent-dashboard__metric-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--size-4-2);
+}
+
+.agent-dashboard-view .agent-dashboard__metric-card,
+.agent-dashboard-view .agent-dashboard__heatmap-card,
+.agent-dashboard-view .agent-dashboard__list-card {
+	border: var(--border-width) solid var(--agent-dashboard-border);
+	border-radius: var(--radius-s);
+	background: var(--agent-dashboard-panel-muted);
+}
+
+.agent-dashboard-view .agent-dashboard__metric-card {
+	min-height: 148px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	padding: var(--size-4-4);
+	border-left-width: 3px;
+}
+
+.agent-dashboard-view .agent-dashboard__metric-card--mint {
+	border-left-color: var(--agent-dashboard-green);
+}
+
+.agent-dashboard-view .agent-dashboard__metric-card--sand {
+	border-left-color: var(--agent-dashboard-yellow);
+}
+
+.agent-dashboard-view .agent-dashboard__metric-card--lime {
+	border-left-color: var(--agent-dashboard-accent);
+}
+
+.agent-dashboard-view .agent-dashboard__metric-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
+	color: var(--agent-dashboard-muted);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-smaller);
+	font-weight: var(--font-bold);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.agent-dashboard-view .agent-dashboard__metric-icon {
+	width: 18px;
+	height: 18px;
+	display: inline-grid;
+	place-items: center;
+}
+
+.agent-dashboard-view .agent-dashboard__metric-value {
+	margin: var(--size-4-2) 0;
+	color: var(--agent-dashboard-ink);
+	font-family: var(--font-text-theme);
+	font-size: 3.25rem;
+	font-weight: var(--font-bold);
+	letter-spacing: -0.09em;
+	line-height: 0.78;
+}
+
+.agent-dashboard-view .agent-dashboard__metric-detail,
+.agent-dashboard-view .agent-dashboard__heatmap-footer p {
+	margin: 0;
+	color: var(--agent-dashboard-muted);
+	font-size: var(--font-ui-small);
+}
+
+.agent-dashboard-view .agent-dashboard__heatmap-card {
+	padding: var(--size-4-4);
+}
+
+.agent-dashboard-view .agent-dashboard__card-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--size-4-4);
+}
+
+.agent-dashboard-view .agent-dashboard__card-title {
+	margin: var(--size-4-1) 0 0;
+	font-family: var(--font-text-theme);
+	font-size: var(--font-ui-large);
+	font-weight: var(--font-bold);
+	letter-spacing: -0.04em;
+	line-height: 1;
+}
+
+.agent-dashboard-view .agent-dashboard__activity-stat {
+	margin: var(--size-4-1) 0 0;
+	color: var(--agent-dashboard-muted);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-ui-small);
+	text-align: right;
+}
+
+.agent-dashboard-view .agent-dashboard__heatmap-frame {
+	margin-top: var(--size-4-5);
+	overflow-x: auto;
+	padding-bottom: var(--size-4-2);
+}
+
+.agent-dashboard-view .agent-dashboard__months {
+	width: 800px;
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	margin: 0 0 var(--size-4-2) 28px;
+	color: var(--agent-dashboard-faint);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-smallest);
+}
+
+.agent-dashboard-view .agent-dashboard__heatmap-grid {
+	width: max-content;
+	display: grid;
+	grid-template-rows: repeat(7, 10px);
+	grid-auto-flow: column;
+	grid-auto-columns: 10px;
+	gap: 4px;
+}
+
+.agent-dashboard-view .agent-dashboard__activity-cell {
+	width: 10px;
+	height: 10px;
+	display: block;
+	border-radius: 2px;
+	background: var(--background-modifier-hover);
+}
+
+.agent-dashboard-view .agent-dashboard__activity-cell--0 {
+	background: var(--background-modifier-hover);
+}
+
+.agent-dashboard-view .agent-dashboard__activity-cell--1 {
+	background: var(--background-modifier-border);
+}
+
+.agent-dashboard-view .agent-dashboard__activity-cell--2 {
+	background: var(--agent-dashboard-green);
+	opacity: 0.45;
+}
+
+.agent-dashboard-view .agent-dashboard__activity-cell--3 {
+	background: var(--agent-dashboard-green);
+	opacity: 0.72;
+}
+
+.agent-dashboard-view .agent-dashboard__activity-cell--4 {
+	background: var(--agent-dashboard-accent);
+}
+
+.agent-dashboard-view .agent-dashboard__heatmap-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-3);
+	padding-top: var(--size-4-3);
+	border-top: var(--border-width) solid var(--agent-dashboard-border);
+}
+
+.agent-dashboard-view .agent-dashboard__legend {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--agent-dashboard-muted);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-smallest);
+	white-space: nowrap;
+}
+
+.agent-dashboard-view .agent-dashboard__operations-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--size-4-3);
+}
+
+.agent-dashboard-view .agent-dashboard__list-card {
+	padding: var(--size-4-4);
+}
+
+.agent-dashboard-view .agent-dashboard__header-mark {
+	color: var(--agent-dashboard-faint);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-bold);
+}
+
+.agent-dashboard-view .agent-dashboard__task-list,
+.agent-dashboard-view .agent-dashboard__feed-list {
+	margin-top: var(--size-4-3);
+	border-top: var(--border-width) solid var(--agent-dashboard-border);
+}
+
+.agent-dashboard-view .agent-dashboard__task-row {
+	width: 100%;
+	min-height: 48px;
+	display: grid;
+	grid-template-columns: 22px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--size-4-2);
+	border: 0;
+	border-bottom: var(--border-width) solid var(--agent-dashboard-border);
+	padding: var(--size-4-2) 0;
+	background: transparent;
+	color: var(--agent-dashboard-ink);
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 160ms ease;
+}
+
+.agent-dashboard-view .agent-dashboard__task-row:hover {
+	background: var(--background-modifier-hover);
+}
+
+.agent-dashboard-view .agent-dashboard__task-check {
+	width: 18px;
+	height: 18px;
+	display: grid;
+	place-items: center;
+	border: var(--border-width) solid var(--agent-dashboard-border-hover);
+	border-radius: var(--radius-s);
+	color: var(--text-on-accent);
+	font-size: var(--font-smaller);
+}
+
+.agent-dashboard-view .agent-dashboard__task-row.is-done .agent-dashboard__task-check {
+	border-color: var(--agent-dashboard-accent);
+	background: var(--agent-dashboard-accent);
+}
+
+.agent-dashboard-view .agent-dashboard__task-body {
+	min-width: 0;
+}
+
+.agent-dashboard-view .agent-dashboard__task-body strong,
+.agent-dashboard-view .agent-dashboard__task-body small {
+	display: block;
+}
+
+.agent-dashboard-view .agent-dashboard__task-body strong {
+	overflow: hidden;
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-bold);
+	letter-spacing: -0.01em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.agent-dashboard-view .agent-dashboard__task-body small {
+	margin-top: 2px;
+	color: var(--agent-dashboard-muted);
+	font-size: var(--font-smallest);
+}
+
+.agent-dashboard-view .agent-dashboard__task-row.is-done .agent-dashboard__task-body strong {
+	color: var(--agent-dashboard-muted);
+	text-decoration: line-through;
+}
+
+.agent-dashboard-view .agent-dashboard__status-badge {
+	border: var(--border-width) solid var(--agent-dashboard-border);
+	border-radius: var(--radius-s);
+	padding: 3px 4px;
+	color: var(--agent-dashboard-muted);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-smallest);
+	font-weight: var(--font-bold);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.agent-dashboard-view .agent-dashboard__status-badge--doing {
+	border-color: var(--agent-dashboard-yellow);
+	color: var(--agent-dashboard-warning);
+}
+
+.agent-dashboard-view .agent-dashboard__status-badge--done {
+	border-color: var(--agent-dashboard-green);
+	color: var(--agent-dashboard-success);
+}
+
+.agent-dashboard-view .agent-dashboard__feed-row {
+	display: grid;
+	grid-template-columns: 20px minmax(0, 1fr) auto;
+	gap: var(--size-4-2);
+	border-bottom: var(--border-width) solid var(--agent-dashboard-border);
+	padding: var(--size-4-3) 0;
+}
+
+.agent-dashboard-view .agent-dashboard__feed-mark {
+	color: var(--agent-dashboard-accent);
+	font-size: var(--font-ui-large);
+	line-height: 1;
+}
+
+.agent-dashboard-view .agent-dashboard__feed-body strong {
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-smaller);
+	font-weight: var(--font-bold);
+}
+
+.agent-dashboard-view .agent-dashboard__feed-body p {
+	margin: 3px 0 0;
+	color: var(--agent-dashboard-ink);
+	font-family: var(--font-text-theme);
+	font-size: var(--font-ui-small);
+	line-height: var(--line-height-tight);
+}
+
+.agent-dashboard-view .agent-dashboard__feed-row small {
+	max-width: 100px;
+	color: var(--agent-dashboard-muted);
+	font-family: var(--agent-dashboard-mono);
+	font-size: var(--font-smallest);
+	text-align: right;
+}
+
+.agent-dashboard-view .agent-dashboard button:focus-visible {
+	outline: 2px solid var(--agent-dashboard-accent);
+	outline-offset: 2px;
+}
+
+@media (max-width: 1100px) {
+	.agent-dashboard-view .agent-dashboard__header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.agent-dashboard-view .agent-dashboard__action-rail {
+		overflow-x: auto;
+		grid-template-columns: repeat(6, 164px);
+		padding-bottom: var(--size-4-1);
+	}
+}
+
+@media (max-width: 800px) {
+	.agent-dashboard-view .agent-dashboard {
+		padding: var(--size-4-3);
+	}
+
+	.agent-dashboard-view .agent-dashboard__metric-grid,
+	.agent-dashboard-view .agent-dashboard__operations-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.agent-dashboard-view .agent-dashboard__card-header,
+	.agent-dashboard-view .agent-dashboard__heatmap-footer {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.agent-dashboard-view .agent-dashboard__activity-stat,
+	.agent-dashboard-view .agent-dashboard__feed-row small {
+		max-width: none;
+		text-align: left;
+	}
+
+	.agent-dashboard-view .agent-dashboard__feed-row {
+		grid-template-columns: 20px minmax(0, 1fr);
+	}
+
+	.agent-dashboard-view .agent-dashboard__feed-row small {
+		grid-column: 2;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.agent-dashboard-view .agent-dashboard *,
+	.agent-dashboard-view .agent-dashboard *::before,
+	.agent-dashboard-view .agent-dashboard *::after {
+		transition-duration: 0.01ms;
+	}
+}

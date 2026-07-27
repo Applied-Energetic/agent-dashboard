@@ -1,0 +1,44 @@
+{
+  "syncTime": "09:42",
+  "actions": [
+    "New Diary",
+    "Deep Research",
+    "Pull RSS Feeds",
+    "GitHub Feeds",
+    "Inbox Ingest",
+    "Vault Lint"
+  ],
+  "metrics": [
+    { "label": "Vault Health Score", "value": "86", "detail": "+4 this week", "accent": "mint", "icon": "pulse" },
+    { "label": "Inbox Backlog", "value": "17", "detail": "9d oldest, 4 need routing", "accent": "sand", "icon": "inbox" },
+    { "label": "Task Flow", "value": "67%", "detail": "12 today, 3 overdue", "accent": "lime", "icon": "flow" }
+  ],
+  "activityStart": "2025-07-01",
+  "activity": [4,0,0,0,0,1,0,2,0,0,1,3,0,0,2,1,0,4,0,0,1,2,3,0,0,1,0,0,2,0,1,0,0,3,4,2,0,0,0,0,1,0,2,0,3,1,0,0,0,2,1,4,0,0,0,3,2,0,0,0,1,0,0,2,0,1,3,0,4,0,2,0,0,0,0,1,0,3,0,0,1,0,0,0,2,4,0,0,3,0,1,2,0,0,0,1,0,0,2,3,1,0,4,0,0,2,0,0,0,0,3,0,2,0,0,1,0,0,0,4,1,3,0,0,0,1,2,0,0,0,1,0,3,2,0,1,4,0,0,0,2,0,0,3,0,1,0,2,0,0,1,0,0,4,3,1,0,0,0,0,1,2,0,0,0,3,0,0,2,0,4,0,0,0,0,2,3,0,0,0,1,0,2,0,0,1,0,4,0,2,1,0,0,0,0,1,2,0,3,0,1,0,0,2,4,1,0,0,0,3,2,0,0,0,0,1,0,2,0,0,3,4,0,0,2,1,0,0,0,0,1,3,0,0,0,1,0,0,4,0,1,0,3,0,0,2,0,0,0,0,1,0,2,3,0,4,0,0,0,2,1,0,0,0,3,1,2,0,0,0,1,0,4,2,0,3,0,0,0,0,2,0,0,0,0,1,3,2,0,4,1,0,0,0,2,1,0,3,0,0,1,2,0,0,0,1,4,0,3,0,1,0,0,0,0,2,0,0,0,3,1,0,2,4,0,1,0,0,0,2,3,0,0,0,0,1,2,0,0,0,4,3,0,2,0,1,0,0,0,0,2,0,3,0,0,1,0,4,0,0,1,0,0,3,2],
+  "tasks": [
+    { "id": "weekly-review", "title": "Finish weekly plan and review", "status": "doing", "meta": "45 min focus block", "done": false },
+    { "id": "research-inbox", "title": "Route research notes from inbox", "status": "todo", "meta": "4 notes need routing", "done": false },
+    { "id": "agent-session", "title": "Review yesterday's agent session", "status": "todo", "meta": "Session #042", "done": false },
+    { "id": "reading-note", "title": "Capture reading note on agent memory", "status": "done", "meta": "Linked to #ai", "done": true },
+    { "id": "daily-diary", "title": "Write today's diary entry", "status": "todo", "meta": "Before 20:00", "done": false }
+  ],
+  "githubFeed": [
+    { "repo": "obsidianmd/obsidian-api", "message": "Type definitions updated for workspace events", "meta": "2h ago · 184 ★" },
+    { "repo": "anthropics/skills", "message": "New reference patterns for agent-facing UI", "meta": "4h ago · 92 ★" },
+    { "repo": "openai/codex", "message": "Discussion: durable local workflow context", "meta": "6h ago · 58 comments" },
+    { "repo": "modelcontextprotocol/specification", "message": "Lifecycle clarification merged", "meta": "Yesterday · 31 ★" },
+    { "repo": "sindresorhus/awesome", "message": "Added knowledge management tooling", "meta": "Yesterday · 12 ★" }
+  ],
+  "planningLinks": [
+    { "title": "Weekly plan", "kind": "PLAN" },
+    { "title": "Weekly review", "kind": "REVIEW" },
+    { "title": "Monthly plan", "kind": "PLAN" },
+    { "title": "Monthly review", "kind": "REVIEW" },
+    { "title": "Quarterly plan", "kind": "PLAN" },
+    { "title": "Quarterly review", "kind": "REVIEW" },
+    { "title": "Yearly plan", "kind": "PLAN" },
+    { "title": "Yearly review", "kind": "REVIEW" },
+    { "title": "Life plan", "kind": "PLAN" },
+    { "title": "Life goals review", "kind": "REVIEW" }
+  ]
+}

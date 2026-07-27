@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="color-scheme" content="light">
+	<title>Sean's Agent Dashboard</title>
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+	<main class="dashboard-shell">
+		<p id="prototype-status" class="sr-only" aria-live="polite">Dashboard ready with local mock data.</p>
+
+		<header class="dashboard-header">
+			<div class="dashboard-header__identity">
+				<p class="eyebrow">AGENTIC VAULT</p>
+				<h1>SEAN'S AGENT DASHBOARD</h1>
+			</div>
+			<div class="dashboard-header__controls" aria-label="Dashboard status">
+				<span class="live-indicator"><i aria-hidden="true"></i> LIVE</span>
+				<span id="sync-time" class="sync-time">Last sync 09:42</span>
+				<button id="refresh-button" class="refresh-button" type="button">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 8.5V4l-1.8 1.8A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.9-4.4L14 9.7z"/></svg>
+					Refresh
+				</button>
+			</div>
+		</header>
+
+		<section class="action-section" aria-label="Mock dashboard actions">
+			<div class="section-kicker"><span>QUICK OPERATIONS</span><span>LOCAL MOCKS ONLY</span></div>
+			<div id="action-rail" class="action-rail"></div>
+		</section>
+
+		<section class="metric-section" aria-label="Vault overview">
+			<div class="section-kicker"><span>VAULT PULSE</span><span>07.15.2026 / TUESDAY</span></div>
+			<div id="metric-grid" class="metric-grid"></div>
+		</section>
+
+		<section class="activity-card" aria-labelledby="activity-title">
+			<div class="activity-card__header">
+				<div>
+					<p class="eyebrow">NOTE CREATION / DAILY SIGNAL</p>
+					<h2 id="activity-title">Vault Note Creation</h2>
+				</div>
+				<p id="active-day-count" class="activity-stat">180 active note days, Jul 2025–Jun 2026</p>
+			</div>
+			<div class="activity-frame">
+				<div class="activity-months" aria-hidden="true">
+					<span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+					<span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+				</div>
+				<div id="activity-grid" class="activity-grid" role="img" aria-label="Daily note creation activity heatmap"></div>
+			</div>
+			<div class="activity-card__footer">
+				<p>One square = one day. Activity is mock data for this prototype.</p>
+				<div class="activity-legend" aria-label="Activity intensity legend"><span>Less</span><i class="activity-cell--0"></i><i class="activity-cell--1"></i><i class="activity-cell--2"></i><i class="activity-cell--3"></i><i class="activity-cell--4"></i><span>More</span></div>
+			</div>
+		</section>
+
+		<section class="operations-grid" aria-label="Today's operations">
+			<article class="list-card" aria-labelledby="tasks-title">
+				<div class="list-card__header">
+					<div><p class="eyebrow">TODAY / 5 ITEMS</p><h2 id="tasks-title">Today Tasks</h2></div>
+					<span class="header-mark">01</span>
+				</div>
+				<div id="tasks-list" class="task-list"></div>
+			</article>
+			<article class="list-card" aria-labelledby="github-title">
+				<div class="list-card__header">
+					<div><p class="eyebrow">EXTERNAL SIGNALS / MOCK</p><h2 id="github-title">GitHub Feed</h2></div>
+					<span class="header-mark">02</span>
+				</div>
+				<div id="github-list" class="feed-list"></div>
+			</article>
+		</section>
+
+		<section class="planning-card" aria-labelledby="planning-title">
+			<div class="planning-card__heading">
+				<div><p class="eyebrow">REVIEW CADENCE / PERSONAL OS</p><h2 id="planning-title">Planning shelf</h2></div>
+				<p>Keep the near term and the long view in the same working surface.</p>
+			</div>
+			<nav id="planning-links" class="planning-links" aria-label="Prototype planning links"></nav>
+		</section>
+
+		<footer class="dashboard-footer"><span>AGENT DASHBOARD / STATIC PROTOTYPE</span><span>NO VAULT MUTATIONS · NO NETWORK REQUESTS IN FILE PREVIEW</span></footer>
+	</main>
+	<script type="module" src="script.js"></script>
+</body>
+</html>

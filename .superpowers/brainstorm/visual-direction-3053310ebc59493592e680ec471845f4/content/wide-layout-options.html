@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Dashboard visual direction</title>
+<style>
+  :root { --ink:#1e201d; --muted:#70736d; --line:#d8d9d2; --paper:#f4f4ef; --panel:#fbfbf7; --acid:#d6ff47; --teal:#a5d7c5; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; color:var(--ink); font:14px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background-color:var(--paper); background-image:linear-gradient(rgba(30,32,29,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(30,32,29,.035) 1px,transparent 1px); background-size:24px 24px; }
+  main { max-width:1360px; margin:0 auto; padding:42px 36px 56px; }
+  .eyebrow { color:#4c5148; letter-spacing:.12em; font-size:11px; font-weight:700; }
+  h1 { margin:7px 0 8px; font-size:28px; letter-spacing:-.06em; line-height:1; }
+  .intro { max-width:780px; color:var(--muted); margin:0 0 28px; }
+  .directions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+  .direction { cursor:pointer; border:1px solid var(--line); background:rgba(251,251,247,.86); padding:13px; transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease; }
+  .direction:hover { transform:translateY(-3px); border-color:#889089; box-shadow:0 12px 24px rgba(36,41,34,.08); }
+  .direction:has(.recommended) { border-color:#a8b16e; }
+  .choice-head { display:flex; justify-content:space-between; align-items:center; padding:3px 0 12px; }
+  .choice-name { font-size:12px; font-weight:800; letter-spacing:.06em; }
+  .recommended { background:var(--acid); padding:3px 6px; font-size:10px; font-weight:900; letter-spacing:.08em; }
+  .mini { min-height:290px; border:1px solid #d9dad3; background:#f8f8f4; padding:14px; overflow:hidden; }
+  .mini.dark { background:#f3f3f0; }
+  .mini.apple { background:#fafaf8; border-radius:18px; padding:16px; }
+  .m-top { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #d7d8d1; padding-bottom:13px; }
+  .m-label { font-size:7px; letter-spacing:.16em; color:#677066; font-weight:800; }
+  .m-title { font-size:15px; letter-spacing:-.08em; font-weight:900; margin-top:5px; }
+  .live { border:1px solid #95b7a6; color:#2e5d47; padding:2px 5px; font-size:7px; font-weight:800; }
+  .actions { display:flex; flex-wrap:wrap; gap:5px; margin:11px 0; }
+  .actions span { border:1px solid #d8d9d1; padding:4px 6px; color:#555a52; font-size:7px; background:#fcfcfa; }
+  .m-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+  .stat { border:1px solid #d8d9d1; padding:9px; }
+  .stat b { display:block; font-size:20px; letter-spacing:-.1em; margin:3px 0; }
+  .stat small { font-size:7px; color:#71766e; }
+  .heat { margin-top:9px; border:1px solid #d8d9d1; padding:9px; }
+  .heat-head { display:flex; justify-content:space-between; color:#5f665c; font-size:7px; margin-bottom:7px; }
+  .cells { height:74px; background-color:#e7e9e3; background-image:linear-gradient(90deg,transparent 89%,#f8f8f4 89%),linear-gradient(transparent 89%,#f8f8f4 89%),linear-gradient(90deg,transparent 60%,#b6dccb 60%),linear-gradient(transparent 50%,#b6dccb 50%); background-size:10px 10px,10px 10px,40px 30px,40px 30px; }
+  .lists { display:grid; grid-template-columns:1.1fr .9fr; gap:8px; margin-top:9px; }
+  .list { border-top:1px solid #d8d9d1; padding-top:7px; }
+  .row { font-size:7px; padding:5px 0; border-bottom:1px dotted #d5d7d0; display:flex; justify-content:space-between; }
+  .row em { color:#5d8a70; font-style:normal; }
+  .dark .m-title,.dark .stat b { letter-spacing:-.04em; }
+  .dark .mini { background:#f3f3f0; }
+  .dark .stat { border-radius:0; background:#f8f8f5; }
+  .dark .heat { background:#fafaf7; }
+  .apple .m-top { border:0; }
+  .apple .stat { border-radius:12px; background:#fff; border-color:#e3e4de; }
+  .apple .heat { border-radius:12px; background:#fff; border-color:#e3e4de; }
+  .apple .actions span { border-radius:999px; }
+  .caption { margin:13px 2px 2px; color:#61665f; font-size:11px; }
+  @media (max-width:920px) { .directions { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">DESIGN CHECKPOINT / DESKTOP LIGHT MODE</div>
+  <h1>Choose the dashboard’s visual posture</h1>
+  <p class="intro">All directions preserve the requested header, action rail, metric cards, contribution graph, Today Tasks and GitHub Feed. The difference is the visual voice. Select a card to record your preference.</p>
+  <section class="directions">
+    <article class="direction" data-choice="editorial-control-room" onclick="toggleSelect(this)">
+      <div class="choice-head"><span class="choice-name">01 / EDITORIAL CONTROL ROOM</span><span class="recommended">RECOMMENDED</span></div>
+      <div class="mini">
+        <div class="m-top"><div><div class="m-label">AGENTIC VAULT</div><div class="m-title">SEAN’S AGENT DASHBOARD</div></div><span class="live">● LIVE</span></div>
+        <div class="actions"><span>NEW DIARY</span><span>DEEP RESEARCH</span><span>RSS</span><span>GITHUB</span><span>INBOX</span><span>VAULT LINT</span></div>
+        <div class="m-stats"><div class="stat"><small>VAULT HEALTH</small><b>86</b><small>+4 THIS WEEK</small></div><div class="stat"><small>INBOX</small><b>17</b><small>4 NEED ROUTING</small></div><div class="stat"><small>TASK FLOW</small><b>67%</b><small>3 OVERDUE</small></div></div>
+        <div class="heat"><div class="heat-head"><span>VAULT NOTE CREATION</span><span>180 ACTIVE DAYS</span></div><div class="cells"></div></div>
+        <div class="lists"><div class="list"><div class="row"><span>REFINE WEEKLY PLAN</span><em>DOING</em></div><div class="row"><span>ROUTE RESEARCH INBOX</span><em>TODO</em></div></div><div class="list"><div class="row"><span>OBSIDIANMD / API</span><em>2h</em></div><div class="row"><span>AGENTKIT / ROADMAP</span><em>8★</em></div></div></div>
+      </div>
+      <p class="caption">Paper-grid workspace, sharp labels, one chartreuse action cue.</p>
+    </article>
+    <article class="direction" data-choice="monochrome-inspector" onclick="toggleSelect(this)">
+      <div class="choice-head"><span class="choice-name">02 / MONOCHROME INSPECTOR</span></div>
+      <div class="mini dark">
+        <div class="m-top"><div><div class="m-label">VAULT / STATUS</div><div class="m-title">AGENT DASHBOARD</div></div><span class="live">ONLINE</span></div>
+        <div class="actions"><span>DIARY</span><span>RESEARCH</span><span>RSS</span><span>GIT</span><span>INBOX</span><span>LINT</span></div>
+        <div class="m-stats"><div class="stat"><small>HEALTH</small><b>86</b><small>+4</small></div><div class="stat"><small>INBOX</small><b>17</b><small>9d</small></div><div class="stat"><small>FLOW</small><b>67%</b><small>12/18</small></div></div>
+        <div class="heat"><div class="heat-head"><span>CREATION LOG</span><span>2025—26</span></div><div class="cells"></div></div>
+        <div class="lists"><div class="list"><div class="row"><span>SYNC NOTES</span><em>→</em></div><div class="row"><span>PROCESS INBOX</span><em>→</em></div></div><div class="list"><div class="row"><span>ISSUE #28</span><em>2h</em></div><div class="row"><span>PR #91</span><em>5★</em></div></div></div>
+      </div>
+      <p class="caption">Strict grayscale utility tool with nearly zero decorative personality.</p>
+    </article>
+    <article class="direction" data-choice="apple-utility" onclick="toggleSelect(this)">
+      <div class="choice-head"><span class="choice-name">03 / APPLE UTILITY</span></div>
+      <div class="mini apple">
+        <div class="m-top"><div><div class="m-label">AGENTIC VAULT</div><div class="m-title">Agent Dashboard</div></div><span class="live">Live</span></div>
+        <div class="actions"><span>New Diary</span><span>Research</span><span>RSS</span><span>GitHub</span><span>Inbox</span><span>Lint</span></div>
+        <div class="m-stats"><div class="stat"><small>Health</small><b>86</b><small>+4 this week</small></div><div class="stat"><small>Inbox</small><b>17</b><small>4 to route</small></div><div class="stat"><small>Flow</small><b>67%</b><small>12 today</small></div></div>
+        <div class="heat"><div class="heat-head"><span>Note creation</span><span>180 days</span></div><div class="cells"></div></div>
+        <div class="lists"><div class="list"><div class="row"><span>Weekly plan</span><em>Doing</em></div><div class="row"><span>Inbox review</span><em>Todo</em></div></div><div class="list"><div class="row"><span>Obsidian API</span><em>2h</em></div><div class="row"><span>Agent dashboard</span><em>8★</em></div></div></div>
+      </div>
+      <p class="caption">Softer corners and gentler hierarchy; most approachable, least tool-like.</p>
+    </article>
+  </section>
+</main>
+</body>
+</html>
