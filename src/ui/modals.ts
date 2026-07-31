@@ -36,7 +36,7 @@ export class ConfirmationModal extends Modal {
 			const pathEl = this.contentEl.createDiv({
 				cls: 'agent-dashboard-modal__path',
 			});
-			pathEl.createSpan({ text: 'Target path' });
+			pathEl.createSpan({ text: '目标路径' });
 			pathEl.createEl('code', { text: this.details.path });
 		}
 		if (this.details.preview) {
@@ -48,7 +48,7 @@ export class ConfirmationModal extends Modal {
 
 		const actions = new Setting(this.contentEl);
 		actions.addButton((button) => {
-			button.setButtonText('Cancel').onClick(() => {
+			button.setButtonText('取消').onClick(() => {
 				this.finish(false);
 			});
 			button.buttonEl.focus();
@@ -95,41 +95,41 @@ export class CaptureModal extends Modal {
 	}
 
 	onOpen(): void {
-		this.titleEl.setText('Capture to inbox');
+		this.titleEl.setText('收集到 inbox');
 
 		new Setting(this.contentEl)
-			.setName('Title')
-			.setDesc('Used to create a safe Markdown filename.')
+			.setName('标题')
+			.setDesc('用于生成安全的 Markdown 文件名。')
 			.addText((text) => {
-				text.setPlaceholder('Research note').onChange((value) => {
+				text.setPlaceholder('研究笔记').onChange((value) => {
 					this.title = value;
 				});
 				text.inputEl.focus();
 			});
 		new Setting(this.contentEl)
-			.setName('Content')
-			.setDesc('Plain Markdown content for the new note.')
+			.setName('内容')
+			.setDesc('新笔记的纯 Markdown 内容。')
 			.addTextArea((text) =>
-				text.setPlaceholder('What should be captured?').onChange((value) => {
+				text.setPlaceholder('需要收集什么内容？').onChange((value) => {
 					this.content = value;
 				}),
 			);
 
 		new Setting(this.contentEl)
 			.addButton((button) =>
-				button.setButtonText('Cancel').onClick(() => {
+				button.setButtonText('取消').onClick(() => {
 					this.finish(null);
 				}),
 			)
 			.addButton((button) =>
 				button
-					.setButtonText('Preview')
+					.setButtonText('预览')
 					.setCta()
 					.onClick(() => {
 						const title = this.title.trim();
 						const content = this.content.trim();
 						if (!title || !content) {
-							new Notice('Enter both a title and content.');
+							new Notice('请输入标题和内容。');
 							return;
 						}
 						this.finish({ title, content });
@@ -163,30 +163,30 @@ export class TopicModal extends Modal {
 	}
 
 	onOpen(): void {
-		this.titleEl.setText('Deep research topic');
+		this.titleEl.setText('深度研究主题');
 		new Setting(this.contentEl)
-			.setName('Research brief')
-			.setDesc('The local CLI receives this text after a separate confirmation.')
+			.setName('研究任务')
+			.setDesc('单独确认后，本地 CLI 才会接收这段文字。')
 			.addTextArea((text) => {
-				text.setPlaceholder('Research a specific topic…').onChange((value) => {
+				text.setPlaceholder('输入一个具体研究主题…').onChange((value) => {
 					this.topic = value;
 				});
 				text.inputEl.focus();
 			});
 		new Setting(this.contentEl)
 			.addButton((button) =>
-				button.setButtonText('Cancel').onClick(() => {
+				button.setButtonText('取消').onClick(() => {
 					this.finish(null);
 				}),
 			)
 			.addButton((button) =>
 				button
-					.setButtonText('Preview command')
+					.setButtonText('预览命令')
 					.setCta()
 					.onClick(() => {
 						const topic = this.topic.trim();
 						if (!topic) {
-							new Notice('Enter a research topic.');
+							new Notice('请输入研究主题。');
 							return;
 						}
 						this.finish(topic);

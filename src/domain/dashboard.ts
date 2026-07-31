@@ -9,7 +9,56 @@ export interface ParsedTask {
 export interface ActivityDay {
 	date: string;
 	count: number;
+	dailyNotePath: string | null;
 }
+
+export interface HeatmapMonthLabel {
+	label: string;
+	column: number;
+}
+
+export interface HeatmapLayout {
+	cells: Array<ActivityDay | null>;
+	months: HeatmapMonthLabel[];
+}
+
+export interface NoteCreatedAtInput {
+	path: string;
+	ctime: number;
+	frontmatterCreated?: unknown;
+}
+
+export interface DashboardFolderDiagnostic {
+	configuredPath: string;
+	exists: boolean;
+	candidates: string[];
+}
+
+export interface DashboardPathDiagnostics {
+	daily: DashboardFolderDiagnostic;
+	inbox: DashboardFolderDiagnostic;
+}
+
+export type PeriodLinkKind = 'week' | 'month' | 'quarter' | 'year';
+
+export interface PeriodLinkTemplates {
+	week: string;
+	month: string;
+	quarter: string;
+	year: string;
+}
+
+export interface PeriodLinkTarget {
+	kind: PeriodLinkKind;
+	expectedLinkpath: string;
+	displayTarget: string;
+	filePath: string | null;
+	status: 'current' | 'fallback' | 'missing';
+}
+
+export type ResolvedPeriodPaths = Partial<
+	Record<PeriodLinkKind, string>
+>;
 
 export interface TaskFlow {
 	completed: number;
@@ -59,6 +108,8 @@ export interface DashboardSnapshot {
 	noteCount: number;
 	activity: ActivityDay[];
 	activeNoteDays: number;
+	paths: DashboardPathDiagnostics;
+	periodLinks: PeriodLinkTarget[];
 	inbox: {
 		count: number;
 		oldestDays: number;
@@ -69,6 +120,66 @@ export interface DashboardSnapshot {
 }
 
 const TASK_PATTERN = /^\s*[-*+]\s+\[([ xX])\]\s+(.+?)\s*$/u;
+const FILE_DATE_PATTERN =
+	/(?:^|[/_\s-])(\d{4}-\d{2}-\d{2})(?=$|[./_\s-])/u;
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
+const DAILY_NOTE_FILENAME_PATTERN =
+	/(?:^|\/)(\d{4}-\d{2}-\d{2})\.md$/u;
+const MONTH_LABELS = [
+	'Jan',
+	'Feb',
+	'Mar',
+	'Apr',
+	'May',
+	'Jun',
+	'Jul',
+	'Aug',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dec',
+] as const;
+const PERIOD_LINK_KINDS: readonly PeriodLinkKind[] = [
+	'week',
+	'month',
+	'quarter',
+	'year',
+];
+const PERIOD_TOKEN_PATTERN = /\{\{(YYYY|MM|WW|Q)\}\}/gu;
+
+function cleanTaskTitle(source: string): string {
+	return source
+		.replace(/\[\[([^\]]+)\]\]/gu, (_match, target: string) => {
+			const parts = target.split('|');
+			return parts.at(-1) ?? target;
+		})
+		.replace(/\[([^\]]+)\]\([^)]+\)/gu, '$1')
+		.replace(/[*_~`]+/gu, '')
+		.replace(/#(?=[\p{L}\p{N}])/gu, '')
+		.replace(/\s+/gu, ' ')
+		.trim();
+}
+
+function parseCreatedAtCandidate(
+	value: unknown,
+	latestAllowed: number,
+): number | null {
+	let timestamp = Number.NaN;
+	if (value instanceof Date) {
+		timestamp = value.getTime();
+	} else if (typeof value === 'number') {
+		timestamp = value;
+	} else if (typeof value === 'string' && value.trim().length > 0) {
+		const source = value.trim();
+		timestamp = DATE_ONLY_PATTERN.test(source)
+			? new Date(`${source}T12:00:00`).getTime()
+			: Date.parse(source);
+	}
+
+	return Number.isFinite(timestamp) && timestamp <= latestAllowed
+		? timestamp
+		: null;
+}
 const DUE_DATE_PATTERN = /\s*📅\s*(\d{4}-\d{2}-\d{2})\s*/u;
 
 export function formatLocalDate(date: Date): string {
@@ -87,7 +198,7 @@ export function parseMarkdownTasks(filePath: string, content: string): ParsedTas
 
 		const rawTitle = match[2] ?? '';
 		const dueMatch = DUE_DATE_PATTERN.exec(rawTitle);
-		const title = rawTitle.replace(DUE_DATE_PATTERN, ' ').trim();
+		const title = cleanTaskTitle(rawTitle.replace(DUE_DATE_PATTERN, ' '));
 		const task: ParsedTask = {
 			filePath,
 			line,
@@ -102,14 +213,55 @@ export function parseMarkdownTasks(filePath: string, content: string): ParsedTas
 	return tasks;
 }
 
-export function buildActivityDays(
-	notes: readonly { createdAt: number }[],
+export function resolveNoteCreatedAt(
+	input: NoteCreatedAtInput,
 	today: Date = new Date(),
+): number {
+	const latestAllowed = new Date(
+		today.getFullYear(),
+		today.getMonth(),
+		today.getDate() + 1,
+	).getTime() - 1;
+	const frontmatterDate = parseCreatedAtCandidate(
+		input.frontmatterCreated,
+		latestAllowed,
+	);
+	if (frontmatterDate !== null) return frontmatterDate;
+
+	const fileDate = FILE_DATE_PATTERN.exec(input.path)?.[1];
+	const filenameDate = parseCreatedAtCandidate(fileDate, latestAllowed);
+	return filenameDate ?? input.ctime;
+}
+
+export function buildActivityDays(
+	notes: readonly { createdAt: number; path?: string }[],
+	today: Date = new Date(),
+	dailyFolders: readonly string[] = [],
 ): ActivityDay[] {
 	const counts = new Map<string, number>();
+	const normalizedDailyFolders = dailyFolders
+		.map(normalizeFolderPath)
+		.filter((folder) => folder.length > 0);
+	const dailyNotePaths = new Map<string, string>();
 	for (const note of notes) {
 		const key = formatLocalDate(new Date(note.createdAt));
 		counts.set(key, (counts.get(key) ?? 0) + 1);
+
+		if (!note.path) continue;
+		const normalizedPath = note.path.replaceAll('\\', '/').replace(/^\/+/u, '');
+		const dailyDate = DAILY_NOTE_FILENAME_PATTERN.exec(normalizedPath)?.[1];
+		if (
+			!dailyDate ||
+			!normalizedDailyFolders.some((folder) =>
+				isPathInsideFolder(normalizedPath, folder),
+			)
+		) {
+			continue;
+		}
+		const currentPath = dailyNotePaths.get(dailyDate);
+		if (!currentPath || normalizedPath.localeCompare(currentPath) < 0) {
+			dailyNotePaths.set(dailyDate, normalizedPath);
+		}
 	}
 
 	const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -117,9 +269,287 @@ export function buildActivityDays(
 
 	return Array.from({ length: 365 }, () => {
 		const date = formatLocalDate(cursor);
-		const day = { date, count: counts.get(date) ?? 0 };
+		const day = {
+			date,
+			count: counts.get(date) ?? 0,
+			dailyNotePath: dailyNotePaths.get(date) ?? null,
+		};
 		cursor.setDate(cursor.getDate() + 1);
 		return day;
+	});
+}
+
+export function buildHeatmapLayout(
+	activity: readonly ActivityDay[],
+): HeatmapLayout {
+	if (activity.length === 0) return { cells: [], months: [] };
+
+	const firstDate = new Date(`${activity[0]?.date ?? ''}T12:00:00`);
+	const leadingCells = Number.isNaN(firstDate.getTime())
+		? 0
+		: firstDate.getDay();
+	const cells: Array<ActivityDay | null> = [
+		...Array.from({ length: leadingCells }, () => null),
+		...activity,
+	];
+	const totalCells = Math.ceil(cells.length / 7) * 7;
+	while (cells.length < totalCells) cells.push(null);
+
+	const months: HeatmapMonthLabel[] = [];
+	let previousMonth = -1;
+	for (const [activityIndex, day] of activity.entries()) {
+		const date = new Date(`${day.date}T12:00:00`);
+		const month = date.getMonth();
+		if (month === previousMonth || Number.isNaN(date.getTime())) continue;
+		months.push({
+			label: MONTH_LABELS[month] ?? '',
+			column: Math.floor((leadingCells + activityIndex) / 7),
+		});
+		previousMonth = month;
+	}
+
+	return { cells, months };
+}
+
+function normalizeFolderPath(path: string): string {
+	return path.trim().replaceAll('\\', '/').replace(/^\/+|\/+$/gu, '');
+}
+
+function diagnoseFolder(
+	configuredPath: string,
+	folderPaths: readonly string[],
+	tokens: readonly string[],
+): DashboardFolderDiagnostic {
+	const normalizedConfiguredPath = normalizeFolderPath(configuredPath);
+	const normalizedFolders = folderPaths.map(normalizeFolderPath);
+	const candidates = normalizedFolders
+		.filter((path) => {
+			const folderName = path.split('/').at(-1)?.toLocaleLowerCase() ?? '';
+			return tokens.some((token) => folderName.includes(token));
+		})
+		.filter((path) => path !== normalizedConfiguredPath)
+		.sort(
+			(left, right) =>
+				left.split('/').length - right.split('/').length ||
+				left.localeCompare(right),
+		)
+		.slice(0, 3);
+
+	return {
+		configuredPath: normalizedConfiguredPath,
+		exists: normalizedFolders.includes(normalizedConfiguredPath),
+		candidates,
+	};
+}
+
+export function diagnoseDashboardFolders(
+	settings: DashboardPathSettings,
+	folderPaths: readonly string[],
+): DashboardPathDiagnostics {
+	return {
+		daily: diagnoseFolder(settings.dailyFolder, folderPaths, [
+			'daily',
+			'diary',
+			'journal',
+			'日记',
+			'日志',
+		]),
+		inbox: diagnoseFolder(settings.inboxFolder, folderPaths, [
+			'inbox',
+			'收集',
+			'收件',
+		]),
+	};
+}
+
+function getIsoWeekParts(date: Date): { week: number; year: number } {
+	const cursor = new Date(
+		Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+	);
+	const weekday = cursor.getUTCDay() || 7;
+	cursor.setUTCDate(cursor.getUTCDate() + 4 - weekday);
+	const year = cursor.getUTCFullYear();
+	const yearStart = new Date(Date.UTC(year, 0, 1));
+	const week = Math.ceil(
+		((cursor.getTime() - yearStart.getTime()) / (24 * 60 * 60 * 1000) + 1) /
+			7,
+	);
+	return { week, year };
+}
+
+function renderPeriodTemplate(
+	template: string,
+	values: Record<'YYYY' | 'MM' | 'WW' | 'Q', string>,
+): string {
+	return template.replace(
+		PERIOD_TOKEN_PATTERN,
+		(_match, token: keyof typeof values) => values[token],
+	);
+}
+
+export function buildPeriodLinkpaths(
+	templates: PeriodLinkTemplates,
+	today: Date = new Date(),
+): Record<PeriodLinkKind, string> {
+	const isoWeek = getIsoWeekParts(today);
+	const calendarYear = String(today.getFullYear());
+	const month = String(today.getMonth() + 1).padStart(2, '0');
+	const quarter = String(Math.floor(today.getMonth() / 3) + 1);
+	const week = String(isoWeek.week).padStart(2, '0');
+
+	return {
+		week: renderPeriodTemplate(templates.week, {
+			YYYY: String(isoWeek.year),
+			MM: month,
+			WW: week,
+			Q: quarter,
+		}),
+		month: renderPeriodTemplate(templates.month, {
+			YYYY: calendarYear,
+			MM: month,
+			WW: week,
+			Q: quarter,
+		}),
+		quarter: renderPeriodTemplate(templates.quarter, {
+			YYYY: calendarYear,
+			MM: month,
+			WW: week,
+			Q: quarter,
+		}),
+		year: renderPeriodTemplate(templates.year, {
+			YYYY: calendarYear,
+			MM: month,
+			WW: week,
+			Q: quarter,
+		}),
+	};
+}
+
+function normalizeMarkdownLinkpath(path: string): string {
+	return path
+		.trim()
+		.replaceAll('\\', '/')
+		.replace(/^\/+|\/+$/gu, '')
+		.replace(/\.md$/u, '');
+}
+
+function getLinkpathSource(path: string, template: string): string {
+	const normalized = normalizeMarkdownLinkpath(path);
+	return template.includes('/') ? normalized : normalized.split('/').at(-1) ?? '';
+}
+
+function compilePeriodTemplate(template: string): RegExp {
+	const seenTokens = new Set<string>();
+	let pattern = '^';
+	let cursor = 0;
+
+	for (const match of template.matchAll(PERIOD_TOKEN_PATTERN)) {
+		const index = match.index ?? cursor;
+		pattern += template
+			.slice(cursor, index)
+			.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+		const token = match[1] ?? '';
+		if (seenTokens.has(token)) {
+			pattern += `\\k<${token}>`;
+		} else {
+			const tokenPattern =
+				token === 'YYYY'
+					? '\\d{4}'
+					: token === 'Q'
+						? '[1-4]'
+						: '\\d{2}';
+			pattern += `(?<${token}>${tokenPattern})`;
+			seenTokens.add(token);
+		}
+		cursor = index + match[0].length;
+	}
+
+	pattern += template
+		.slice(cursor)
+		.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+	return new RegExp(`${pattern}$`, 'u');
+}
+
+function getPeriodKey(
+	kind: PeriodLinkKind,
+	groups: Record<string, string> | undefined,
+): number {
+	const year = Number(groups?.YYYY ?? 0);
+	switch (kind) {
+		case 'week':
+			return year * 100 + Number(groups?.WW ?? 0);
+		case 'month':
+			return year * 100 + Number(groups?.MM ?? 0);
+		case 'quarter':
+			return year * 10 + Number(groups?.Q ?? 0);
+		case 'year':
+			return year;
+	}
+}
+
+function getDisplayTarget(path: string): string {
+	return normalizeMarkdownLinkpath(path).split('/').at(-1) ?? path;
+}
+
+export function buildPeriodLinkTargets(
+	notes: readonly Pick<DashboardNoteRecord, 'path'>[],
+	templates: PeriodLinkTemplates,
+	today: Date = new Date(),
+	resolvedCurrentPaths: ResolvedPeriodPaths = {},
+): PeriodLinkTarget[] {
+	const linkpaths = buildPeriodLinkpaths(templates, today);
+
+	return PERIOD_LINK_KINDS.map((kind) => {
+		const expectedLinkpath = linkpaths[kind];
+		const currentPath =
+			resolvedCurrentPaths[kind] ??
+			notes.find((note) => {
+				const source = getLinkpathSource(note.path, templates[kind]);
+				return source === normalizeMarkdownLinkpath(expectedLinkpath);
+			})?.path;
+		if (currentPath) {
+			return {
+				kind,
+				expectedLinkpath,
+				displayTarget: getDisplayTarget(currentPath),
+				filePath: currentPath,
+				status: 'current',
+			};
+		}
+
+		const templatePattern = compilePeriodTemplate(templates[kind]);
+		const expectedMatch = templatePattern.exec(expectedLinkpath);
+		const expectedKey = getPeriodKey(kind, expectedMatch?.groups);
+		const fallback = notes
+			.map((note) => {
+				const source = getLinkpathSource(note.path, templates[kind]);
+				const match = templatePattern.exec(source);
+				return {
+					key: getPeriodKey(kind, match?.groups),
+					matches: match !== null,
+					path: note.path,
+				};
+			})
+			.filter(
+				(candidate) =>
+					candidate.matches &&
+					candidate.key > 0 &&
+					candidate.key <= expectedKey,
+			)
+			.sort(
+				(left, right) =>
+					right.key - left.key || left.path.localeCompare(right.path),
+			)[0];
+
+		return {
+			kind,
+			expectedLinkpath,
+			displayTarget: fallback
+				? getDisplayTarget(fallback.path)
+				: getDisplayTarget(expectedLinkpath),
+			filePath: fallback?.path ?? null,
+			status: fallback ? 'fallback' : 'missing',
+		};
 	});
 }
 
@@ -189,6 +619,8 @@ export function createDashboardSnapshot(
 	notes: readonly DashboardNoteRecord[],
 	settings: DashboardPathSettings,
 	todayDate: Date = new Date(),
+	folderPaths: readonly string[] = [],
+	periodLinks: readonly PeriodLinkTarget[] = [],
 ): DashboardSnapshot {
 	const today = formatLocalDate(todayDate);
 	const todayPath = `${settings.dailyFolder.replace(/\/+$/u, '')}/${today}.md`;
@@ -222,7 +654,11 @@ export function createDashboardSnapshot(
 		dueDate: task.dueDate ?? today,
 	}));
 	const taskFlow = calculateTaskFlow(flowTasks, today);
-	const activity = buildActivityDays(notes, todayDate);
+	const paths = diagnoseDashboardFolders(settings, folderPaths);
+	const dailyFolders = paths.daily.exists
+		? [paths.daily.configuredPath]
+		: paths.daily.candidates.slice(0, 1);
+	const activity = buildActivityDays(notes, todayDate, dailyFolders);
 	const inboxNotes = notes.filter((note) =>
 		isPathInsideFolder(note.path, settings.inboxFolder),
 	);
@@ -270,6 +706,8 @@ export function createDashboardSnapshot(
 		noteCount: notes.length,
 		activity,
 		activeNoteDays: activity.filter((day) => day.count > 0).length,
+		paths,
+		periodLinks: [...periodLinks],
 		inbox: {
 			count: inboxNotes.length,
 			oldestDays:

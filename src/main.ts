@@ -35,7 +35,11 @@ import {
 	ConfirmationModal,
 	TopicModal,
 } from './ui/modals';
-import type { ParsedTask } from './domain/dashboard';
+import type {
+	ActivityDay,
+	ParsedTask,
+	PeriodLinkTarget,
+} from './domain/dashboard';
 import type { ExternalFeedItem } from './domain/externalFeeds';
 
 interface StoredPluginData {
@@ -108,13 +112,13 @@ export default class AgentDashboardPlugin
 			(leaf) => new AgentDashboardView(leaf, this),
 		);
 
-		this.addRibbonIcon('layout-dashboard', 'Open agent dashboard', () => {
+		this.addRibbonIcon('layout-dashboard', '打开智能体仪表盘', () => {
 			void this.activateDashboardView();
 		});
 
 		this.addCommand({
 			id: 'open-modal-simple',
-			name: 'Open dashboard',
+			name: '打开仪表盘',
 			callback: () => {
 				void this.activateDashboardView();
 			},
@@ -122,7 +126,7 @@ export default class AgentDashboardPlugin
 
 		this.addCommand({
 			id: 'replace-selected',
-			name: 'Open dashboard from editor',
+			name: '从编辑器打开仪表盘',
 			editorCallback: () => {
 				void this.activateDashboardView();
 			},
@@ -130,7 +134,7 @@ export default class AgentDashboardPlugin
 
 		this.addCommand({
 			id: 'open-modal-complex',
-			name: 'Open dashboard with an active note',
+			name: '有活动笔记时打开仪表盘',
 			checkCallback: (checking: boolean) => {
 				const markdownView =
 					this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -149,6 +153,10 @@ export default class AgentDashboardPlugin
 
 	getDashboardState(): DashboardDataState {
 		return this.dashboardDataService.getState();
+	}
+
+	getPluginVersion(): string {
+		return this.manifest.version;
 	}
 
 	getExternalFeedState(): ExternalFeedState {
@@ -203,11 +211,11 @@ export default class AgentDashboardPlugin
 					await this.createVaultLintReport();
 					break;
 				default:
-					throw new Error(`Unknown dashboard action: ${actionId}`);
+					throw new Error(`未知的仪表盘操作：${actionId}`);
 			}
 		} catch (error) {
 			const message =
-				error instanceof Error ? error.message : 'Dashboard action failed';
+				error instanceof Error ? error.message : '仪表盘操作失败';
 			new Notice(message);
 		}
 	}
@@ -217,7 +225,7 @@ export default class AgentDashboardPlugin
 			normalizePath(task.filePath),
 		);
 		if (!(file instanceof TFile)) {
-			new Notice(`Task source no longer exists: ${task.filePath}`);
+			new Notice(`任务来源已不存在：${task.filePath}`);
 			return;
 		}
 		await this.vaultActionService.openFile(file);
@@ -234,11 +242,87 @@ export default class AgentDashboardPlugin
 		}
 	}
 
+	async openDailyNote(day: ActivityDay): Promise<void> {
+		if (!day.dailyNotePath) {
+			new Notice(`${day.date} 的日记不存在。`);
+			return;
+		}
+
+		const file = this.app.vault.getAbstractFileByPath(
+			normalizePath(day.dailyNotePath),
+		);
+		if (!(file instanceof TFile)) {
+			new Notice(`日记已不存在：${day.dailyNotePath}`);
+			await this.refreshDashboard();
+			return;
+		}
+
+		const existingLeaf = this.app.workspace
+			.getLeavesOfType('markdown')
+			.find(
+				(leaf) =>
+					leaf.view instanceof MarkdownView &&
+					leaf.view.file?.path === file.path,
+			);
+		if (existingLeaf) {
+			await this.app.workspace.revealLeaf(existingLeaf);
+			return;
+		}
+
+		const leaf = this.app.workspace.getLeaf('tab');
+		await leaf.openFile(file);
+		await this.app.workspace.revealLeaf(leaf);
+	}
+
+	async openPeriodLink(target: PeriodLinkTarget): Promise<void> {
+		const labels = {
+			week: '每周',
+			month: '每月',
+			quarter: '季度',
+			year: '年度',
+		} as const;
+		const label = labels[target.kind];
+		if (!target.filePath) {
+			new Notice(`未找到${label}复盘笔记。`);
+			return;
+		}
+
+		const file = this.app.vault.getAbstractFileByPath(
+			normalizePath(target.filePath),
+		);
+		if (!(file instanceof TFile)) {
+			new Notice(`复盘笔记已不存在：${target.filePath}`);
+			await this.refreshDashboard();
+			return;
+		}
+
+		const existingLeaf = this.app.workspace
+			.getLeavesOfType('markdown')
+			.find(
+				(leaf) =>
+					leaf.view instanceof MarkdownView &&
+					leaf.view.file?.path === file.path,
+			);
+		if (existingLeaf) {
+			await this.app.workspace.revealLeaf(existingLeaf);
+		} else {
+			const leaf = this.app.workspace.getLeaf('tab');
+			await leaf.openFile(file);
+			await this.app.workspace.revealLeaf(leaf);
+		}
+
+		if (target.status === 'fallback') {
+			new Notice(
+				`未找到本期${label}复盘，已打开 ${target.displayTarget}。`,
+			);
+		}
+	}
+
 	openExternalItem(item: ExternalFeedItem): void {
 		try {
 			const url = new URL(item.url);
 			if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-				new Notice('Only HTTP and HTTPS links can be opened.');
+				new Notice('只能打开 HTTP 或 HTTPS 链接。');
 				return;
 			}
 			this.app.workspace.containerEl.ownerDocument.defaultView?.open(
@@ -247,7 +331,7 @@ export default class AgentDashboardPlugin
 				'noopener,noreferrer',
 			);
 		} catch {
-			new Notice('The external link is invalid.');
+			new Notice('外部链接无效。');
 		}
 	}
 
@@ -260,21 +344,21 @@ export default class AgentDashboardPlugin
 		const existing = this.vaultActionService.getExistingFile(preview.path);
 		if (existing) {
 			await this.vaultActionService.openFile(existing);
-			new Notice('Today’s diary already exists.');
+			new Notice('今天的日记已存在。');
 			return;
 		}
 		const confirmed = await new ConfirmationModal(this.app, {
-			title: 'Create today’s diary?',
+			title: '创建今天的日记？',
 			description: preview.description,
 			path: preview.path,
 			preview: preview.content,
-			confirmLabel: 'Create diary',
+			confirmLabel: '创建日记',
 		}).openAndWait();
 		if (!confirmed) return;
 		const file = await this.vaultActionService.create(preview);
 		await this.vaultActionService.openFile(file);
 		await this.refreshDashboard();
-		new Notice('Today’s diary created.');
+		new Notice('今天的日记已创建。');
 	}
 
 	private async captureInbox(): Promise<void> {
@@ -285,36 +369,36 @@ export default class AgentDashboardPlugin
 			input.content,
 		);
 		const confirmed = await new ConfirmationModal(this.app, {
-			title: 'Create Inbox note?',
+			title: '创建 Inbox 笔记？',
 			description: preview.description,
 			path: preview.path,
 			preview: preview.content,
-			confirmLabel: 'Create note',
+			confirmLabel: '创建笔记',
 		}).openAndWait();
 		if (!confirmed) return;
 		const file = await this.vaultActionService.create(preview);
 		await this.vaultActionService.openFile(file);
 		await this.refreshDashboard();
-		new Notice('Inbox note created.');
+		new Notice('Inbox 笔记已创建。');
 	}
 
 	private async createVaultLintReport(): Promise<void> {
 		const snapshot = this.dashboardDataService.getState().snapshot;
 		if (!snapshot) {
-			throw new Error('Refresh the Dashboard before creating a lint report.');
+			throw new Error('请先刷新仪表盘，再创建检查报告。');
 		}
 		const preview = this.vaultActionService.getLintReportPreview(snapshot);
 		const confirmed = await new ConfirmationModal(this.app, {
-			title: 'Create Vault lint report?',
+			title: '创建 Vault 检查报告？',
 			description: preview.description,
 			path: preview.path,
 			preview: preview.content,
-			confirmLabel: 'Create report',
+			confirmLabel: '创建报告',
 		}).openAndWait();
 		if (!confirmed) return;
 		const file = await this.vaultActionService.create(preview);
 		await this.vaultActionService.openFile(file);
-		new Notice('Vault lint report created.');
+		new Notice('Vault 检查报告已创建。');
 	}
 
 	private async refreshExternalFeed(source: 'github' | 'rss'): Promise<void> {
@@ -324,59 +408,59 @@ export default class AgentDashboardPlugin
 				? [
 						...settings.githubRepositories,
 						settings.githubSearchQuery
-							? `Search: ${settings.githubSearchQuery}`
+							? `搜索：${settings.githubSearchQuery}`
 							: '',
 					].filter(Boolean)
 				: settings.rssFeeds;
 		if (sources.length === 0) {
-			throw new Error(`Configure at least one ${source.toUpperCase()} source first.`);
+			throw new Error(`请先配置至少一个 ${source.toUpperCase()} 来源。`);
 		}
 		const confirmed = await new ConfirmationModal(this.app, {
-			title: `Refresh ${source === 'github' ? 'GitHub' : 'RSS'} feed?`,
+			title: `刷新 ${source === 'github' ? 'GitHub' : 'RSS'} 信息流？`,
 			description:
-				'This sends a network request to the public sources listed below. No Vault content or credentials are included.',
+				'这会向下列公开来源发送网络请求，不包含任何 Vault 内容或凭据。',
 			preview: sources.join('\n'),
-			confirmLabel: 'Allow request',
+			confirmLabel: '允许请求',
 		}).openAndWait();
 		if (!confirmed) return;
 		await this.externalFeedService.refresh(source);
-		new Notice(`${source === 'github' ? 'GitHub' : 'RSS'} feed refreshed.`);
+		new Notice(`${source === 'github' ? 'GitHub' : 'RSS'} 信息流已刷新。`);
 	}
 
 	private async runDeepResearch(): Promise<void> {
 		if (!Platform.isDesktop) {
-			throw new Error('Local agent tasks are available on desktop only.');
+			throw new Error('本地智能体任务仅支持桌面端。');
 		}
 		const topic = await new TopicModal(this.app).openAndWait();
 		if (!topic) return;
 		const command = this.agentTaskService.getCommand(topic);
 		const confirmed = await new ConfirmationModal(this.app, {
-			title: 'Run local research agent?',
+			title: '运行本地研究智能体？',
 			description:
-				'This starts the configured local CLI in a restricted read-only or plan mode. Review the exact command before continuing.',
+				'这会以受限的只读或计划模式启动已配置的本地 CLI。继续前请检查完整命令。',
 			preview: command.preview,
-			confirmLabel: 'Run agent',
+			confirmLabel: '运行智能体',
 		}).openAndWait();
 		if (!confirmed) return;
 
 		const output = await this.agentTaskService.run(topic);
 		if (!output.trim()) {
-			new Notice('The local agent finished without output.');
+			new Notice('本地智能体已结束，但没有输出。');
 			return;
 		}
 		const preview = this.vaultActionService.getAgentOutputPreview(topic, output);
 		const saveConfirmed = await new ConfirmationModal(this.app, {
-			title: 'Save agent output?',
+			title: '保存智能体输出？',
 			description: preview.description,
 			path: preview.path,
 			preview: preview.content.slice(0, 4_000),
-			confirmLabel: 'Save report',
+			confirmLabel: '保存报告',
 		}).openAndWait();
 		if (!saveConfirmed) return;
 		const file = await this.vaultActionService.create(preview);
 		await this.vaultActionService.openFile(file);
 		await this.refreshDashboard();
-		new Notice('Agent output saved.');
+		new Notice('智能体输出已保存。');
 	}
 
 	private async loadPluginData(): Promise<void> {
@@ -384,6 +468,31 @@ export default class AgentDashboardPlugin
 		const root = isRecord(loaded) ? loaded : {};
 		const settingsSource = isRecord(root.settings) ? root.settings : root;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, settingsSource);
+		const periodTemplateSource = isRecord(settingsSource.periodLinkTemplates)
+			? settingsSource.periodLinkTemplates
+			: {};
+		this.settings.periodLinkTemplates = {
+			week:
+				typeof periodTemplateSource.week === 'string' &&
+				periodTemplateSource.week.trim()
+					? periodTemplateSource.week.trim()
+					: DEFAULT_SETTINGS.periodLinkTemplates.week,
+			month:
+				typeof periodTemplateSource.month === 'string' &&
+				periodTemplateSource.month.trim()
+					? periodTemplateSource.month.trim()
+					: DEFAULT_SETTINGS.periodLinkTemplates.month,
+			quarter:
+				typeof periodTemplateSource.quarter === 'string' &&
+				periodTemplateSource.quarter.trim()
+					? periodTemplateSource.quarter.trim()
+					: DEFAULT_SETTINGS.periodLinkTemplates.quarter,
+			year:
+				typeof periodTemplateSource.year === 'string' &&
+				periodTemplateSource.year.trim()
+					? periodTemplateSource.year.trim()
+					: DEFAULT_SETTINGS.periodLinkTemplates.year,
+		};
 		this.settings.dailyFolder =
 			typeof this.settings.dailyFolder === 'string'
 				? normalizePath(this.settings.dailyFolder)

@@ -33,7 +33,7 @@ export class VaultActionService {
 		return {
 			path,
 			content: buildDiaryContent(date),
-			description: 'Create today’s daily note. Existing files are never overwritten.',
+			description: '创建今天的每日笔记，绝不会覆盖已有文件。',
 		};
 	}
 
@@ -42,7 +42,7 @@ export class VaultActionService {
 		content: string,
 		now: Date = new Date(),
 	): VaultWritePreview {
-		const safeTitle = sanitizeFileName(title) || 'Untitled capture';
+		const safeTitle = sanitizeFileName(title) || '未命名收集';
 		const stamp = now.toISOString().replace(/[:.]/gu, '-');
 		const path = normalizePath(
 			`${this.getSettings().inboxFolder}/${stamp}-${safeTitle}.md`,
@@ -50,7 +50,7 @@ export class VaultActionService {
 		return {
 			path,
 			content: buildInboxContent(safeTitle, content, now.toISOString()),
-			description: 'Create a new Inbox note with local frontmatter.',
+			description: '创建一篇包含本地 frontmatter 的 Inbox 笔记。',
 		};
 	}
 
@@ -84,7 +84,7 @@ export class VaultActionService {
 		return {
 			path,
 			content,
-			description: 'Create a Markdown report from the current read-only scan.',
+			description: '根据当前只读扫描结果创建 Markdown 报告。',
 		};
 	}
 
@@ -101,14 +101,14 @@ export class VaultActionService {
 		return {
 			path,
 			content: `# ${topic}\n\n${content.trim()}\n`,
-			description: 'Save reviewed local agent output as a Markdown report.',
+			description: '将已检查的本地智能体输出保存为 Markdown 报告。',
 		};
 	}
 
 	async create(preview: VaultWritePreview): Promise<TFile> {
 		const existing = this.app.vault.getAbstractFileByPath(preview.path);
 		if (existing) {
-			throw new Error(`A file already exists at ${preview.path}`);
+			throw new Error(`文件已存在：${preview.path}`);
 		}
 		await this.ensureParentFolder(preview.path);
 		return this.app.vault.create(preview.path, preview.content);
@@ -136,7 +136,7 @@ export class VaultActionService {
 			const existing = this.app.vault.getAbstractFileByPath(current);
 			if (existing instanceof TFolder) continue;
 			if (existing) {
-				throw new Error(`Cannot create folder because ${current} is a file`);
+				throw new Error(`无法创建文件夹，因为 ${current} 已是文件`);
 			}
 			await this.app.vault.createFolder(current);
 		}

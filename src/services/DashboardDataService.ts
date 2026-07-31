@@ -2,14 +2,20 @@ import {
 	App,
 	Component,
 	TFile,
+	TFolder,
 	getAllTags,
 	type EventRef,
 } from 'obsidian';
 import {
+	buildPeriodLinkpaths,
+	buildPeriodLinkTargets,
 	createDashboardSnapshot,
 	parseMarkdownTasks,
+	resolveNoteCreatedAt,
 	type DashboardNoteRecord,
 	type DashboardSnapshot,
+	type PeriodLinkKind,
+	type ResolvedPeriodPaths,
 } from '../domain/dashboard';
 import type { AgentDashboardSettings } from '../settings';
 
@@ -92,7 +98,11 @@ export class DashboardDataService extends Component {
 
 					return {
 						path: file.path,
-						createdAt: file.stat.ctime,
+						createdAt: resolveNoteCreatedAt({
+							path: file.path,
+							ctime: file.stat.ctime,
+							frontmatterCreated: cache?.frontmatter?.created,
+						}),
 						modifiedAt: file.stat.mtime,
 						linkCount:
 							(cache?.links?.length ?? 0) +
@@ -103,14 +113,49 @@ export class DashboardDataService extends Component {
 				}),
 			);
 			const settings = this.getSettings();
-			const snapshot = createDashboardSnapshot(notes, {
-				dailyFolder: settings.dailyFolder,
-				inboxFolder: settings.inboxFolder,
-			});
+			const folderPaths = this.app.vault
+				.getAllLoadedFiles()
+				.filter((entry): entry is TFolder => entry instanceof TFolder)
+				.map((folder) => folder.path);
+			const now = new Date();
+			const expectedLinkpaths = buildPeriodLinkpaths(
+				settings.periodLinkTemplates,
+				now,
+			);
+			const resolvedCurrentPaths: ResolvedPeriodPaths = {};
+			const periodKinds: readonly PeriodLinkKind[] = [
+				'week',
+				'month',
+				'quarter',
+				'year',
+			];
+			for (const kind of periodKinds) {
+				const file = this.app.metadataCache.getFirstLinkpathDest(
+					expectedLinkpaths[kind],
+					'',
+				);
+				if (file) resolvedCurrentPaths[kind] = file.path;
+			}
+			const periodLinks = buildPeriodLinkTargets(
+				notes,
+				settings.periodLinkTemplates,
+				now,
+				resolvedCurrentPaths,
+			);
+			const snapshot = createDashboardSnapshot(
+				notes,
+				{
+					dailyFolder: settings.dailyFolder,
+					inboxFolder: settings.inboxFolder,
+				},
+				now,
+				folderPaths,
+				periodLinks,
+			);
 			this.setState({ status: 'ready', snapshot, error: null });
 		} catch (error) {
 			const message =
-				error instanceof Error ? error.message : 'Unknown Vault scan error';
+				error instanceof Error ? error.message : '未知的 Vault 扫描错误';
 			this.setState({ ...this.state, status: 'error', error: message });
 		}
 	}

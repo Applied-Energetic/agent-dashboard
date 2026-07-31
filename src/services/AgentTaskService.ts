@@ -67,10 +67,10 @@ export class AgentTaskService {
 
 	async run(topic: string): Promise<string> {
 		if (!Platform.isDesktop) {
-			throw new Error('Local agent tasks are available on desktop only.');
+			throw new Error('本地智能体任务仅支持桌面端。');
 		}
 		if (this.state.status === 'running') {
-			throw new Error('An agent task is already running.');
+			throw new Error('已有智能体任务正在运行。');
 		}
 
 		const command = this.getCommand(topic);
@@ -89,7 +89,7 @@ export class AgentTaskService {
 		return new Promise<string>((resolve, reject) => {
 			const viewWindow = this.getWindow();
 			if (!viewWindow) {
-				reject(new Error('The Obsidian window is not available.'));
+				reject(new Error('Obsidian 窗口不可用。'));
 				return;
 			}
 			const executable = Platform.isWin ? 'powershell.exe' : command.command;

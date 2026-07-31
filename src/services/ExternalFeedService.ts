@@ -73,7 +73,7 @@ export class ExternalFeedService {
 			});
 		} catch (error) {
 			const message =
-				error instanceof Error ? error.message : 'External feed refresh failed';
+				error instanceof Error ? error.message : '外部信息流刷新失败';
 			this.setState({
 				...this.state,
 				loadingSource: null,
@@ -121,7 +121,7 @@ export class ExternalFeedService {
 			result.status === 'fulfilled' ? [result.value] : [],
 		);
 		if (payloads.length === 0) {
-			throw new Error('All configured GitHub requests failed.');
+			throw new Error('所有已配置的 GitHub 请求均失败。');
 		}
 		return normalizeGitHubPayloads(payloads);
 	}
@@ -138,7 +138,7 @@ export class ExternalFeedService {
 			result.status === 'fulfilled' ? result.value : [],
 		);
 		if (feeds.length > 0 && items.length === 0) {
-			throw new Error('All configured RSS requests failed.');
+			throw new Error('所有已配置的 RSS 请求均失败。');
 		}
 		return items
 			.sort(
@@ -151,7 +151,7 @@ export class ExternalFeedService {
 	private parseRss(xml: string, sourceUrl: string): ExternalFeedItem[] {
 		const viewWindow = this.getWindow();
 		if (!viewWindow) {
-			throw new Error('The Obsidian window is not available.');
+			throw new Error('Obsidian 窗口不可用。');
 		}
 		const WindowDomParser = (
 			viewWindow as Window & { DOMParser: typeof DOMParser }
